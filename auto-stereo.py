@@ -40,7 +40,9 @@ def process_files(uploaded_files, progress_bar):
 
         for i, uploaded_file in enumerate(uploaded_files):
             input_path = os.path.join(temp_dir, uploaded_file.name)
-            output_path = os.path.join(temp_dir, f"stereo_{os.path.splitext(uploaded_file.name)[0]}.wav")
+            # 'stereo_' 접두사를 제거하고 확장자만 .wav로 변경
+            output_filename = os.path.splitext(uploaded_file.name)[0] + '.wav'
+            output_path = os.path.join(temp_dir, output_filename)
 
             # Save uploaded file
             with open(input_path, "wb") as f:
