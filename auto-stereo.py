@@ -1,37 +1,24 @@
 import streamlit as st
 import os
 import tempfile
-import subprocess
 import zipfile
 import io
-
-def check_ffmpeg():
-    try:
-        subprocess.run(["ffmpeg", "-version"], check=True, capture_output=True, text=True)
-        return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return False
+from pydub import AudioSegment
 
 def convert_to_stereo(input_file, output_file):
     try:
-        command = [
-            "ffmpeg",
-            "-i", input_file,
-            "-ac", "2",  # 2 channels (stereo)
-            "-y",  # Overwrite output file if it exists
-            output_file
-        ]
-        result = subprocess.run(command, check=True, capture_output=True, text=True)
+        audio = AudioSegment.from_mp3(input_file)
+        if audio.channels == 1:
+            stereo_audio = audio.set_channels(2)
+        else:
+            stereo_audio = audio
+        stereo_audio.export(output_file, format="mp3")
         return True
-    except subprocess.CalledProcessError as e:
-        st.error(f"Error converting {input_file}: {e.stderr}")
+    except Exception as e:
+        st.error(f"Error converting {input_file}: {str(e)}")
         return False
 
 def process_files(uploaded_files, progress_bar):
-    if not check_ffmpeg():
-        st.error("FFmpeg is not installed or not found in the system PATH. Please install FFmpeg to use this application.")
-        return None
-
     with tempfile.TemporaryDirectory() as temp_dir:
         converted_files = []
         total_files = len(uploaded_files)
