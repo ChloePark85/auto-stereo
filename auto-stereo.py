@@ -3,32 +3,30 @@ import os
 import tempfile
 import zipfile
 import io
-import wave
-import struct
-import array
+from pydub import AudioSegment
+from pydub.exceptions import CouldntDecodeError
 
-def read_mp3(file_path):
-    # 주의: 이 함수는 실제 MP3 디코딩을 수행하지 않습니다.
-    # 실제 구현에서는 적절한 MP3 디코더 라이브러리를 사용해야 합니다.
-    with open(file_path, 'rb') as f:
-        return f.read()
-
-def write_wav(audio_data, file_path, channels=2, sample_width=2, frame_rate=44100):
-    with wave.open(file_path, 'wb') as wav_file:
-        wav_file.setnchannels(channels)
-        wav_file.setsampwidth(sample_width)
-        wav_file.setframerate(frame_rate)
-        wav_file.writeframes(audio_data)
+# pydub가 ffmpeg를 사용하지 않도록 설정
+AudioSegment.converter = None
+AudioSegment.ffmpeg = None
+AudioSegment.ffprobe = None
 
 def convert_to_stereo(input_file, output_file):
     try:
-        # MP3 파일 읽기 (실제 구현에서는 MP3 디코딩 필요)
-        audio_data = read_mp3(input_file)
+        # MP3 파일 읽기
+        audio = AudioSegment.from_mp3(input_file)
         
-        # WAV 파일로 저장 (스테레오)
-        write_wav(audio_data, output_file, channels=2)
+        # 스테레오로 변환
+        if audio.channels == 1:
+            audio = audio.set_channels(2)
+        
+        # WAV 파일로 저장
+        audio.export(output_file, format="wav")
         
         return True
+    except CouldntDecodeError:
+        st.error(f"Error decoding {input_file}. The file might be corrupted or not a valid MP3.")
+        return False
     except Exception as e:
         st.error(f"Error converting {input_file}: {str(e)}")
         return False
@@ -40,7 +38,6 @@ def process_files(uploaded_files, progress_bar):
 
         for i, uploaded_file in enumerate(uploaded_files):
             input_path = os.path.join(temp_dir, uploaded_file.name)
-            # 'stereo_' 접두사를 제거하고 확장자만 .wav로 변경
             output_filename = os.path.splitext(uploaded_file.name)[0] + '.wav'
             output_path = os.path.join(temp_dir, output_filename)
 
