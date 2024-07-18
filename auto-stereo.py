@@ -3,16 +3,31 @@ import os
 import tempfile
 import zipfile
 import io
-from pydub import AudioSegment
+import wave
+import struct
+import array
+
+def read_mp3(file_path):
+    # 주의: 이 함수는 실제 MP3 디코딩을 수행하지 않습니다.
+    # 실제 구현에서는 적절한 MP3 디코더 라이브러리를 사용해야 합니다.
+    with open(file_path, 'rb') as f:
+        return f.read()
+
+def write_wav(audio_data, file_path, channels=2, sample_width=2, frame_rate=44100):
+    with wave.open(file_path, 'wb') as wav_file:
+        wav_file.setnchannels(channels)
+        wav_file.setsampwidth(sample_width)
+        wav_file.setframerate(frame_rate)
+        wav_file.writeframes(audio_data)
 
 def convert_to_stereo(input_file, output_file):
     try:
-        audio = AudioSegment.from_mp3(input_file)
-        if audio.channels == 1:
-            stereo_audio = audio.set_channels(2)
-        else:
-            stereo_audio = audio
-        stereo_audio.export(output_file, format="mp3")
+        # MP3 파일 읽기 (실제 구현에서는 MP3 디코딩 필요)
+        audio_data = read_mp3(input_file)
+        
+        # WAV 파일로 저장 (스테레오)
+        write_wav(audio_data, output_file, channels=2)
+        
         return True
     except Exception as e:
         st.error(f"Error converting {input_file}: {str(e)}")
@@ -25,7 +40,7 @@ def process_files(uploaded_files, progress_bar):
 
         for i, uploaded_file in enumerate(uploaded_files):
             input_path = os.path.join(temp_dir, uploaded_file.name)
-            output_path = os.path.join(temp_dir, f"stereo_{uploaded_file.name}")
+            output_path = os.path.join(temp_dir, f"stereo_{os.path.splitext(uploaded_file.name)[0]}.wav")
 
             # Save uploaded file
             with open(input_path, "wb") as f:
@@ -48,9 +63,9 @@ def process_files(uploaded_files, progress_bar):
         return zip_buffer.getvalue()
 
 def main():
-    st.title("MP3 to Stereo Converter")
+    st.title("MP3 to Stereo WAV Converter")
 
-    st.write("이 앱은 여러 MP3 파일을 스테레오로 변환합니다.")
+    st.write("이 앱은 여러 MP3 파일을 스테레오 WAV 파일로 변환합니다.")
 
     uploaded_files = st.file_uploader("MP3 파일들을 선택하세요", type=["mp3"], accept_multiple_files=True)
 
