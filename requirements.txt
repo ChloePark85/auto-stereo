@@ -1,3 +1,4 @@
 pydub
 mutagen
 ffmpeg
+streamlit
